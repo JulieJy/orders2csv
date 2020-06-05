@@ -10,23 +10,33 @@ class Orders2csv
 
   # Configure the Shopify connection
   def initialize
-    shop_url = "https://#{ENV["SHOPIFY_API_KEY"]}:#{ENV["SHOPIFY_PASSWORD"]}@#{ENV["SHOP"]}.myshopify.com/admin"
-    ShopifyAPI::Base.api_version = '2020-04'
-    ShopifyAPI::Base.site = shop_url
-    @orders = ShopifyAPI::Order.find(:all, :params => {:status => 'any', :limit => 250})
-    puts "*** looking for shopify orders on store #{ENV["SHOP"]} ***"
-    puts @orders
+    set_shop
+    get_orders
   end
 
   def csv_file
-    attributes = %w(billing_address)
-    orders_csv = CSV.generate do |csv|
+    attributes = @orders.first.attributes.keys
+    puts '*** creating csv file ***'
+    CSV.open("#{Time.now.strftime("%Y%m%d%H%M%S")}_order_file.csv", "wb") do |csv|
       csv << attributes
       @orders.each do |obj|
-        csv << attributes.map{ |attr| obj[attr.to_sym] }
+        csv << attributes.map{ |attr| obj.attributes[attr] }
       end
     end
-    return orders_csv
+    puts '*** finished ! :) ***'
+  end
+
+  private
+
+  def set_shop
+    shop_url = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_PASSWORD']}@#{ENV['SHOP']}.myshopify.com/admin"
+    ShopifyAPI::Base.site = shop_url
+    ShopifyAPI::Base.api_version = '2020-04'
+  end
+
+  def get_orders
+    puts "*** looking for shopify orders on store #{ENV['SHOP']} ***"
+    @orders = ShopifyAPI::Order.find(:all, params: { status: 'any', limit: 250 })
   end
 end
 
