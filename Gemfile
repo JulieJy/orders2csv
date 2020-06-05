@@ -9,4 +9,4 @@ gem 'rake'
 gem 'pry'
 
 # Testing
-gem 'minitest'
+gem 'rspec'
